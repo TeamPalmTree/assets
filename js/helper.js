@@ -56,7 +56,7 @@ var Helper = {
         var hours = parseInt(normalized_duration_parts[0]);
         var minutes = parseInt(normalized_duration_parts[1]);
         var seconds = parseInt(normalized_duration_parts[2]);
-        var end_date = new Date(start_date.getTime() + (hours * 3600000) + (minutes * 60000) * (seconds * 1000));
+        var end_date = new Date(start_date.getTime() + (hours * 3600000) + (minutes * 60000) + (seconds * 1000));
         return end_date.format("yyyy-mm-dd HH:MM");
     },
 
