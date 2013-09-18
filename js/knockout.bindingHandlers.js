@@ -59,7 +59,7 @@ ko.bindingHandlers['popover'] = {
             var contentGuid = Helper.guid();
             var contentId = "ko-popover-" + contentGuid;
             // create correct binding context
-            var childBindingContext = bindingContext.createChildContext(viewModel);
+            var contentBindingContext = bindingContext.createChildContext(viewModel);
             // create DOM object to use for popover content
             var contentHtml = "<div id='" + contentId + "'>" + templateHtml + "</div>";
             // set popover options content & html render mode
@@ -78,11 +78,9 @@ ko.bindingHandlers['popover'] = {
                 trigger = 'focus blur';
             // apply binding function
             $(element).on(trigger, function() {
-                ko.applyBindingsToDescendants(childBindingContext, document.getElementById(contentId));
+                if (!ko.dataFor(document.getElementById(contentId)))
+                    ko.applyBindings(contentBindingContext, document.getElementById(contentId));
             });
-
-            // Also tell KO *not* to bind the descendants itself, otherwise they will be bound twice
-            return { controlsDescendantBindings: true };
 
         } else {
 
