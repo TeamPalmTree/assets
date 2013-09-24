@@ -123,3 +123,12 @@ ko.bindingHandlers['tablesorter'] = {
         //$(element).trigger("update", [resort]);
     }
 };
+
+ko.bindingHandlers.scrollTo = {
+    update: function(element, valueAccessor) {
+        if (ko.utils.unwrapObservable(valueAccessor())) {
+            element.scrollIntoView();
+            valueAccessor(false);
+        }
+    }
+};
