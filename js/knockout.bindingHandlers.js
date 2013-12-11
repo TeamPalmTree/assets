@@ -1,28 +1,131 @@
+// validate
+ko.bindingHandlers['validate'] = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {},
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+
+        // get values
+        var errors = valueAccessor()();
+        var allBindings = allBindings();
+        var validateFor = allBindings.validateFor;
+        var validateAlert = allBindings.validateAlert;
+
+        // make sure the root has errors
+        if (!errors)
+            return;
+
+        // get the element's field name
+        var fieldName = validateFor ? validateFor : $(element).attr('name');
+        // see if our field is in the errors list
+        var has_error = errors.hasOwnProperty(fieldName);
+
+        // standard validation
+        if (!validateFor) {
+
+            // get ascendant form group
+            var group = $(element).closest('.form-group');
+            // verify we have
+            if (!group)
+                return;
+
+            // clear out help blocks
+            group.find('.help-block').remove();
+            // do we have an error
+            if (has_error) {
+
+                // highlight control group
+                if (!group.hasClass('has-error'))
+                    group.addClass('has-error');
+                // generate help block
+                var helpBlockHTML = '<span class="help-block">' + errors[fieldName] + '</span>';
+                // add help block
+                $(element).after(helpBlockHTML);
+
+            } else {
+
+                // remove all has-errors
+                group.removeClass('has-error');
+
+            }
+
+        } else {
+
+            // do we have an error
+            if (has_error) {
+
+                // alert or text
+                if (validateAlert)
+                    $(element).addClass('alert').addClass('alert-danger');
+                else
+                    $(element).addClass('text-danger');
+                // set message
+                $(element).html(errors[fieldName]);
+
+            } else {
+
+                // alert or text
+                if (validateAlert)
+                    $(element).removeClass('alert').removeClass('alert-danger');
+                else
+                    $(element).removeClass('text-danger');
+
+                // set message
+                $(element).html('');
+            }
+
+        }
+    }
+};
+
 // typeahead
-ko.bindingHandlers['typeahead'] = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+ko.bindingHandlers['numChecked'] = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+
+        // get value
         var value = valueAccessor();
-        var allBindings = allBindingsAccessor();
-        // get options
-        var options = allBindings.typeaheadOptions;
-        // call bootstrap typeahead
-        $(element).typeahead(options);
-        // set up value binding
-        ko.bindingHandlers.value.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        // update value to normal
+        if (value() == '1')
+            value(true);
+        else
+            value(false);
+
+        // forward to standard checked
+        ko.bindingHandlers.checked.init(element, valueAccessor, allBindings, viewModel, bindingContext);
+
+    }
+};
+
+
+// now value
+ko.bindingHandlers['nowValue'] = {
+    inject: function(allBindings) {
+        return {
+            has: function (bindingKey) {
+                return (bindingKey == 'valueUpdate') || allBindings.has(bindingKey);
+            },
+            get: function (bindingKey) {
+                var binding = allBindings.get(bindingKey);
+                if (bindingKey == 'valueUpdate') {
+                    binding = binding ? [].concat(binding, 'afterkeydown') : 'afterkeydown';
+                }
+                return binding;
+            }
+        }
     },
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         // set up value binding
-        ko.bindingHandlers.value.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        ko.bindingHandlers.value.init(element, valueAccessor, ko.bindingHandlers['nowValue'].inject(allBindings), viewModel, bindingContext);
+    },
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        // set up value binding
+        ko.bindingHandlers.value.update(element, valueAccessor, allBindings, viewModel, bindingContext);
     }
 };
 
 // date time picker
 ko.bindingHandlers['datetimepicker'] = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var value = valueAccessor();
-        var allBindings = allBindingsAccessor();
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         // get options
-        var options = allBindings.datetimepickerOptions;
+        var options = allBindings.get('datetimepickerOptions');
         // extend options with defaults
         options = jQuery.extend(
             {
@@ -33,94 +136,28 @@ ko.bindingHandlers['datetimepicker'] = {
         // call bootstrap datetimepicker
         $(element).datetimepicker(options);
         // set up value binding
-        ko.bindingHandlers.value.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        ko.bindingHandlers.value.init(element, valueAccessor, allBindings, viewModel, bindingContext);
     },
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         // set up value binding
-        ko.bindingHandlers.value.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-    }
-};
-
-// typeahead
-ko.bindingHandlers['popover'] = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-
-        var value = valueAccessor();
-        var allBindings = allBindingsAccessor();
-        // get options
-        var options = value;
-
-        // see if we have a template specified
-        if (options.templateId) {
-
-            // get template html
-            var templateHtml = $('#' + options.templateId).html();
-            // create unique identifier to bind to
-            var contentGuid = Helper.guid();
-            var contentId = "ko-popover-" + contentGuid;
-            // create correct binding context
-            var contentBindingContext = bindingContext.createChildContext(viewModel);
-            // create DOM object to use for popover content
-            var contentHtml = "<div id='" + contentId + "'>" + templateHtml + "</div>";
-            // set popover options content & html render mode
-            options.content = contentHtml;
-            options.html = true;
-
-            // call bootstrap typeahead
-            $(element).popover(options);
-
-            // get trigger
-            var trigger = $(element).data('popover').options.trigger;
-            // update triggers
-            if (trigger === 'hover')
-                trigger = 'mouseenter mouseleave';
-            else if (trigger === 'focus')
-                trigger = 'focus blur';
-            // apply binding function
-            $(element).on(trigger, function() {
-                if (!ko.dataFor(document.getElementById(contentId)))
-                    ko.applyBindings(contentBindingContext, document.getElementById(contentId));
-            });
-
-        } else {
-
-            // call bootstrap typeahead
-            $(element).popover(options);
-
-        }
-
-    }
-};
-
-// tooltip
-ko.bindingHandlers['tooltip'] = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var value = valueAccessor();
-        var allBindings = allBindingsAccessor();
-        // get options
-        var options = value;
-        // call bootstrap tooltip
-        $(element).tooltip(options);
+        ko.bindingHandlers.value.update(element, valueAccessor, allBindings, viewModel, bindingContext);
     }
 };
 
 // tablesorter
 ko.bindingHandlers['tablesorter'] = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var value = valueAccessor();
-        var allBindings = allBindingsAccessor();
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         // get options
         var options = allBindings.tablesorterOptions;
         // call jquery tablesorter
         $(element).tablesorter(options);
     },
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         // create the dependency
         var data = ko.utils.unwrapObservable(valueAccessor());
         var resort = true;
         $(element).trigger('destroy');
         $(element).tablesorter();
-        //$(element).trigger("update", [resort]);
     }
 };
 
@@ -130,5 +167,41 @@ ko.bindingHandlers.scrollTo = {
             element.scrollIntoView();
             valueAccessor(false);
         }
+    }
+};
+
+// typeahead
+ko.bindingHandlers['typeaheadJS'] = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        // get options
+        var options = allBindings.get('typeaheadJSOptions');
+        // call bootstrap typeahead
+        $(element).typeahead(options).on('typeahead:selected', function(obj, datum){
+            valueAccessor()(datum.value);
+        });
+        // set up value binding
+        ko.bindingHandlers.value.init(element, valueAccessor, allBindings, viewModel, bindingContext);
+
+    },
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        // set up value binding
+        ko.bindingHandlers.value.update(element, valueAccessor, allBindings, viewModel, bindingContext);
+    }
+};
+
+// show modal
+ko.bindingHandlers.modal = {
+    update: function (element, valueAccessor) {
+        var value = valueAccessor();
+        if (ko.unwrap(value)) {
+            $(element).modal('show');
+            // find input
+            var input = $(element).find('input');
+            if (!input) return;
+            // focus and go to end of input
+            input.focus();
+            input.val(input.val());
+        } else
+            $(element).modal('hide');
     }
 };

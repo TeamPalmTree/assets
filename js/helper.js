@@ -26,22 +26,31 @@ var Helper = {
             + Helper.pad(seconds.toString(), 2);
     },
 
-    normalized_duration: function(duration) {
+    normalize_duration: function(duration) {
+
+        // split duration parts
         var duration_parts = duration.split(':');
-        if (duration_parts.length == 3) {
-            var hours = parseInt(duration_parts[0]);
-            var minutes = parseInt(duration_parts[1]);
-            var seconds = parseInt(duration_parts[2]);
-            return Helper.pad(hours.toString(), 2) + ':'
-                + Helper.pad(minutes.toString(), 2) + ':'
-                + Helper.pad(seconds.toString(), 2);
-        } else {
-            var minutes = parseInt(duration_parts[0]);
-            var seconds = parseInt(duration_parts[1]);
-            return '00:'
-                + Helper.pad(minutes.toString(), 2) + ':'
-                + Helper.pad(seconds.toString(), 2);
+        // get duration parts length
+        var duration_parts_length = duration_parts.length;
+
+        var hours = 0;
+        var minutes = 0;
+        var seconds = 0;
+        // normalize duration based on provided input
+        if (duration_parts_length == 3) {
+            hours = parseInt(duration_parts[0]);
+            minutes = parseInt(duration_parts[1]);
+            seconds = parseInt(duration_parts[2]);
+        } else if (duration_parts_length == 2) {
+            minutes = parseInt(duration_parts[0]);
+            seconds = parseInt(duration_parts[1]);
+        } else if (duration_parts_length == 1) {
+            seconds = parseInt(duration_parts[0]);
         }
+
+        // now recalculate the duration
+        return Helper.calculate_duration(hours, minutes, seconds);
+
     },
 
     normalize_datetime: function(str) {
@@ -50,12 +59,12 @@ var Helper = {
         return str.substr(0, str.lastIndexOf(':'));
     },
 
-    datetime_add_duration: function(start_datetime, normalized_duration) {
+    datetime_add_duration: function(start_datetime, normalize_duration) {
         var start_date = Helper.date(start_datetime);
-        var normalized_duration_parts = normalized_duration.split(':');
-        var hours = parseInt(normalized_duration_parts[0]);
-        var minutes = parseInt(normalized_duration_parts[1]);
-        var seconds = parseInt(normalized_duration_parts[2]);
+        var normalize_duration_parts = normalize_duration.split(':');
+        var hours = parseInt(normalize_duration_parts[0]);
+        var minutes = parseInt(normalize_duration_parts[1]);
+        var seconds = parseInt(normalize_duration_parts[2]);
         var end_date = new Date(start_date.getTime() + (hours * 3600000) + (minutes * 60000) + (seconds * 1000));
         return end_date.format("yyyy-mm-dd HH:MM");
     },
@@ -128,6 +137,24 @@ var Helper = {
 
     guid: function() {
         return Helper.s4() + Helper.s4() + '-' + Helper.s4() + '-' + Helper.s4() + '-' + Helper.s4() + '-' + Helper.s4() + Helper.s4() + Helper.s4();
-    }
+    },
+
+    ucfirst: function(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    },
+
+    human_name: function(name) {
+
+        // verify
+        if (!name) return name;
+        // split name into parts
+        var name_parts = name.split('_');
+        // capitalize each name part
+        for (var i = 0; i < name_parts.length; i++)
+            name_parts[i] = Helper.ucfirst(name_parts[i]);
+        // success
+        return name_parts.join(' ');
+
+    },
 
 }
