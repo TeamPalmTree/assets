@@ -55,3 +55,16 @@ function modal_model() {
     this.reset();
 
 }
+
+///////////
+// READY //
+///////////
+
+$(function() {
+
+    // create modal
+    window.modal = new modal_model();
+    // bind modal
+    ko.applyBindings(window.modal, document.getElementById('modal'));
+
+});
