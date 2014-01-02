@@ -6,13 +6,14 @@ function modal_model() {
 
     // members
     this.type = ko.observable();
-    this.value = ko.observable();
     this.title = ko.observable();
     this.text = ko.observable();
-    this.placeholder = ko.observable();
     this.visible = ko.observable();
+    this.template = ko.observable();
+    this.object = ko.observable();
     this.ok_text = ko.observable();
     this.cancel_text = ko.observable();
+    var original_object;
 
     // ok
     this.ok = function() {};
@@ -42,13 +43,15 @@ function modal_model() {
     // reset
     this.reset = function() {
         this.type('text');
-        this.value(null);
         this.title(null);
         this.text(null);
         this.visible(false);
-        this.placeholder(false);
+        this.template(null);
+        this.object(null);
+        this.visible(false);
         this.ok_text('OK');
         this.cancel_text('CANCEL');
+        this.original_object = null;
     }.bind(this);
 
     // initialize

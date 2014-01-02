@@ -196,7 +196,7 @@ ko.bindingHandlers.modal = {
         if (ko.unwrap(value)) {
             $(element).modal('show');
             // find input
-            var input = $(element).find('input');
+            var input = $(element).find('input').first();
             if (!input) return;
             // focus and go to end of input
             input.focus();
