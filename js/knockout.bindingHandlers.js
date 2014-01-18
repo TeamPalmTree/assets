@@ -96,7 +96,7 @@ ko.bindingHandlers['numChecked'] = {
 
 
 // now value
-ko.bindingHandlers['nowValue'] = {
+ko.bindingHandlers['immediate'] = {
     inject: function(allBindings) {
         return {
             has: function (bindingKey) {
@@ -113,7 +113,7 @@ ko.bindingHandlers['nowValue'] = {
     },
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         // set up value binding
-        ko.bindingHandlers.value.init(element, valueAccessor, ko.bindingHandlers['nowValue'].inject(allBindings), viewModel, bindingContext);
+        ko.bindingHandlers.value.init(element, valueAccessor, ko.bindingHandlers['immediate'].inject(allBindings), viewModel, bindingContext);
     },
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         // set up value binding
@@ -203,5 +203,81 @@ ko.bindingHandlers.modal = {
             input.val(input.val());
         } else
             $(element).modal('hide');
+    }
+};
+
+// CKEditor
+ko.bindingHandlers.ckeditor = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        var options = allBindings.get('ckeditorOptions') || {};
+        var modelValue = valueAccessor();
+        var value = ko.utils.unwrapObservable(valueAccessor());
+
+        $(element).html(value);
+        $(element).ckeditor(options);
+
+        var editor = $(element).ckeditorGet();
+
+        //handle edits made in the editor
+        editor.on('change', function(e) {
+            var self = this;
+            if (ko.isWriteableObservable(self)) {
+                self($(e.listenerData).val());
+            }
+        }, modelValue, element);
+
+        //handle disposal (if KO removes by the template binding)
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+            if (editor) {
+                CKEDITOR.remove(editor);
+            };
+        });
+    },
+    update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        // handle programmatic updates to the observable
+        var newValue = ko.utils.unwrapObservable(valueAccessor());
+        if ($(element).ckeditorGet().getData() != newValue)
+            $(element).ckeditorGet().setData(newValue)
+    }
+};
+
+// uploader
+ko.bindingHandlers.uploader = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+
+        // on input change
+        element.addEventListener("change", function (evt) {
+
+            // get upload url
+            var uploadUrl = allBindings.get('uploadUrl');
+            // create a form data object to hold files
+            var form_data = new FormData();
+            // get files length
+            var files_length = element.files.length;
+            // verify we have one
+            if (files_length == 1) {
+
+                // get the file
+                var file = element.files[0];
+                // update value
+                valueAccessor()(file.name);
+                // create a file reader
+                var file_reader = new FileReader();
+                // read file data
+                file_reader.readAsDataURL(file);
+                // set in form data
+                form_data.append(element.name, file);
+                // ajax upload
+                $.ajax({
+                    url: uploadUrl,
+                    type: 'POST',
+                    data: form_data,
+                    processData: false,
+                    contentType: false
+                });
+
+            }
+
+        });
     }
 };
