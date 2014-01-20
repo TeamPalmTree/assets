@@ -96,7 +96,7 @@ ko.bindingHandlers['numChecked'] = {
 
 
 // now value
-ko.bindingHandlers['nowValue'] = {
+ko.bindingHandlers['immediate'] = {
     inject: function(allBindings) {
         return {
             has: function (bindingKey) {
@@ -113,7 +113,7 @@ ko.bindingHandlers['nowValue'] = {
     },
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         // set up value binding
-        ko.bindingHandlers.value.init(element, valueAccessor, ko.bindingHandlers['nowValue'].inject(allBindings), viewModel, bindingContext);
+        ko.bindingHandlers.value.init(element, valueAccessor, ko.bindingHandlers['immediate'].inject(allBindings), viewModel, bindingContext);
     },
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         // set up value binding
