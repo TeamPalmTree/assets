@@ -7,10 +7,7 @@ function Component_Model() {
 };
 
 // refresh
-Component_Model.prototype.refresh = function() {
-
-};
-
+Component_Model.prototype.refresh = function() {};
 // initialize
 Component_Model.prototype.initialize = function() {
 
@@ -37,6 +34,10 @@ Component_Model.prototype.initialize = function() {
 // modal model
 function Modal_Model() {
 
+    // self
+    var self = this;
+    // inherit
+    Component_Model.call(this);
     // members
     this.type = ko.observable();
     this.title = ko.observable();
@@ -53,44 +54,53 @@ function Modal_Model() {
 
     // cancel
     this.cancel = function() {
-        this.hide();
+        self.hide();
     };
 
     // keypress
     this.keypress = function(data, e) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
-        if (keycode == '13') this.ok();
+        if (keycode == '13') self.ok();
         return true;
-    }.bind(this);
+    };
 
     // hide
     this.hide = function() {
-        this.visible(false);
-    }.bind(this);
+        self.visible(false);
+    };
 
     // show
     this.show = function() {
-        this.visible(true);
-    }.bind(this);
+        self.visible(true);
+    };
 
     // reset
     this.reset = function() {
-        this.type('text');
-        this.title(null);
-        this.text(null);
-        this.visible(false);
-        this.template(null);
-        this.object(null);
-        this.visible(false);
-        this.ok_text('OK');
-        this.cancel_text('CANCEL');
-        this.original_object = null;
-    }.bind(this);
+        self.type('text');
+        self.title(null);
+        self.text(null);
+        self.visible(false);
+        self.template(null);
+        self.object(null);
+        self.visible(false);
+        self.ok_text('OK');
+        self.cancel_text('CANCEL');
+        self.original_object = null;
+    };
 
     // initialize
-    this.reset();
+    this.initialize = function() {
+        // base call
+        Component_Model.prototype.initialize.call(self);
+        // reset us
+        self.reset();
+    };
 
 };
+
+// navigation model prototype
+Modal_Model.prototype = Object.create(Component_Model.prototype);
+Modal_Model.prototype.constructor = Modal_Model;
 
 // navigation model
 function Navigation_Model() {
@@ -144,8 +154,11 @@ function Standard_Model() {
     };
 
     // add standard component interface
-    this.add_component = function(id, model) {
+    this.initialize_component = function(id, model) {
 
+        // see if we were given a model
+        if (model === undefined)
+            model = Helper.ucfirst(id) + '_Model';
         // get the model
         if (window[model] === undefined)
             return;
@@ -153,18 +166,21 @@ function Standard_Model() {
         if (typeof(window[model]) !== 'function')
             return;
 
+        // convert id
+        var component_id = id.replace('-', '_');
+
         var component;
         // if we already have the component model, rebind
-        if (!self.hasOwnProperty(id)) {
+        if (!self.hasOwnProperty(component_id)) {
             // create component
             component = new window[model]();
             // set component id
             component.id(id);
             // add component to components for global access
-            self[id] = component;
+            self[component_id] = component;
         } else {
             // hydrate component
-            component = self[id];
+            component = self[component_id];
         }
 
         // initialize component
