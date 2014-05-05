@@ -106,7 +106,7 @@ function Navigation_Model() {
     // inherit component model
     Component_Model.call(this);
     // members
-    this.section_title = ko.observable();
+    this.section_name = ko.observable();
 
 };
 
@@ -136,7 +136,7 @@ function Standard_Model() {
         // load html into page body
         $('body').load(page_url, function() {
             // update newly loaded links with navigate function
-            $('a.local').click(self.click_link);
+            $('#page a.local').click(self.click_link);
             // activate page components
             self.activate_components();
         });
