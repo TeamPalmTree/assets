@@ -1,17 +1,17 @@
 // component model
 function Component_Model() {
-
     // members
     this.id = ko.observable();
-
 };
 
+// initialize
+Component_Model.prototype.initialize = function() {};
 // refresh
 Component_Model.prototype.refresh = function() {};
-// initialize
-Component_Model.prototype.initialize = function() {
+// attach
+Component_Model.prototype.attach = function(id) {
 
-    // self
+    // set self
     var self = this;
     // get element
     var element = document.getElementById(self.id());
@@ -23,8 +23,6 @@ Component_Model.prototype.initialize = function() {
             self[index] = value;
     });
 
-    // refresh
-    this.refresh();
     // apply knockout bindings
     ko.applyBindings(self, element);
 
@@ -91,7 +89,7 @@ function Modal_Model() {
     // initialize
     this.initialize = function() {
         // base call
-        Component_Model.prototype.initialize.call(self);
+        Component_Model.prototype.activate.call(self);
         // reset us
         self.reset();
     };
@@ -121,9 +119,11 @@ function Standard_Model() {
 
     // self
     var self = this;
+    // models
+    this.models = {};
 
     // local navigation
-    this.navigate = function(url, replace) {
+    this.navigate_url = function(url, replace) {
 
         // verify we aren't going to ourselves
         if (url == window.location.pathname)
@@ -132,11 +132,13 @@ function Standard_Model() {
         if (replace)
             window.history.pushState({}, '', url);
         // generate body url
-        var section_url = url + '?section_only=1';
-        // load html into section body
-        $('div.standard-section').load(section_url, function() {
+        var page_url = url + '?body=1';
+        // load html into page body
+        $('body').load(page_url, function() {
             // update newly loaded links with navigate function
-            $('div.standard-section a.local').click(self.click_link);
+            $('#page a.local').click(self.click_link);
+            // activate page components
+            self.activate_components();
         });
 
     };
@@ -149,44 +151,64 @@ function Standard_Model() {
         // get url
         var url = $(this).attr('href');
         // navigate
-        self.navigate(url, true);
+        self.navigate_url(url, true);
 
     };
 
     // add standard component interface
-    this.initialize_component = function(id, model) {
+    this.activate_component = function(id) {
 
-        // see if we were given a model
-        if (model === undefined)
-            model = Helper.ucfirst(id) + '_Model';
-        // get the model
-        if (window[model] === undefined)
+        // attempt to get the model from the data attribute
+        var model = $('#' + id).data('model');
+        // verify the model
+        if ((model === undefined) || (window[model] === undefined) || (typeof(window[model]) !== 'function'))
             return;
-        // verify model exists
-        if (typeof(window[model]) !== 'function')
-            return;
-
-        // convert id
-        var component_id = id.replace('-', '_');
 
         var component;
         // if we already have the component model, rebind
-        if (!self.hasOwnProperty(component_id)) {
+        if (!self.models.hasOwnProperty(model)) {
+
             // create component
             component = new window[model]();
             // set component id
             component.id(id);
-            // add component to components for global access
-            self[component_id] = component;
+            // add component to models cache
+            self.models[model] = component;
+            // set id in self to component
+            self[id] = component;
+            // initialize component
+            component.initialize();
+
         } else {
+
             // hydrate component
-            component = self[component_id];
+            component = self.models[model];
+            // set id to component
+            self[id] = component;
+
         }
 
-        // initialize component
-        component.initialize();
+        // refresh component
+        component.refresh();
+        // attach component
+        component.attach();
 
     };
+
+    // reactivate page components
+    this.activate_components = function() {
+
+        // activate display
+        self.activate_component('display');
+        // activate navigation
+        self.activate_component('navigation');
+        // activate section
+        self.activate_component('section');
+
+    };
+
+    // initialize
+    this.activate_components();
 
 };
 
@@ -199,7 +221,7 @@ $(function() {
     $('a.local').click(window.standard.click_link);
     // back button listener
     window.addEventListener("popstate", function() {
-        window.standard.navigate(location.pathname);
+        window.standard.navigate_url(location.pathname);
     });
 
 });
