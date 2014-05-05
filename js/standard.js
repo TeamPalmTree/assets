@@ -192,12 +192,16 @@ function Standard_Model() {
         component.refresh();
         // attach component
         component.attach();
+        // success
+        return component;
 
     };
 
     // reactivate page components
     this.activate_components = function() {
 
+        // activate modal
+        self.activate_component('modal');
         // activate display
         self.activate_component('display');
         // activate navigation
