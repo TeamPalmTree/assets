@@ -136,7 +136,7 @@ function Standard_Model() {
         // load html into page body
         $('body').load(page_url, function() {
             // update newly loaded links with navigate function
-            $('#page a.local').click(self.click_link);
+            $('a.local').click(self.click_link);
             // activate page components
             self.activate_components();
         });
