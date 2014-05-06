@@ -206,8 +206,8 @@ function Standard_Model() {
         self.activate_component('display');
         // activate navigation
         self.activate_component('navigation');
-        // activate section
-        self.activate_component('section');
+        // activate content
+        self.activate_component('content');
 
     };
 
